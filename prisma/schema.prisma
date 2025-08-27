@@ -1,0 +1,392 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// DSA 4.1 Game Data Models
+model Race {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  
+  // Attribute modifiers
+  muMod       Int      @default(0) // Mut (Courage)
+  klMod       Int      @default(0) // Klugheit (Intelligence)
+  inMod       Int      @default(0) // Intuition
+  chMod       Int      @default(0) // Charisma
+  ffMod       Int      @default(0) // Fingerfertigkeit (Dexterity)
+  geMod       Int      @default(0) // Gewandtheit (Agility)
+  koMod       Int      @default(0) // Konstitution (Constitution)
+  kkMod       Int      @default(0) // Körperkraft (Strength)
+  
+  // Special abilities and restrictions
+  specialAbilities String?
+  restrictions     String?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  heroes      Hero[]
+  
+  @@map("races")
+}
+
+model Culture {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  
+  // Language and script knowledge
+  languages   String?
+  scripts     String?
+  
+  // Cultural advantages and disadvantages
+  advantages     String?
+  disadvantages  String?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  heroes      Hero[]
+  
+  @@map("cultures")
+}
+
+model Profession {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  
+  // Adventure points cost
+  apCost      Int      @default(0)
+  
+  // Attribute requirements
+  muMin       Int      @default(8)
+  klMin       Int      @default(8)
+  inMin       Int      @default(8)
+  chMin       Int      @default(8)
+  ffMin       Int      @default(8)
+  geMin       Int      @default(8)
+  koMin       Int      @default(8)
+  kkMin       Int      @default(8)
+  
+  // Special abilities
+  specialAbilities String?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  heroes      Hero[]
+  
+  @@map("professions")
+}
+
+model Advantage {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  apCost      Int      // Adventure points cost
+  
+  // Prerequisites
+  requirements String?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  heroes      HeroAdvantage[]
+  
+  @@map("advantages")
+}
+
+model Disadvantage {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  apValue     Int      // Adventure points gained
+  
+  // Prerequisites
+  requirements String?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  heroes      HeroDisadvantage[]
+  
+  @@map("disadvantages")
+}
+
+model SpecialAbility {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  apCost      Int      // Adventure points cost
+  category    String   // e.g., "Combat", "Magic", "Clerical"
+  
+  // Prerequisites
+  requirements String?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  heroes      HeroSpecialAbility[]
+  
+  @@map("special_abilities")
+}
+
+model Talent {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  category    String   // e.g., "Physical", "Social", "Mental", "Craft"
+  
+  // Associated attributes for talent tests
+  attribute1  String   // MU, KL, IN, CH, FF, GE, KO, KK
+  attribute2  String
+  attribute3  String
+  
+  // Difficulty and other properties
+  difficulty  String   @default("Normal") // Easy, Normal, Hard
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  heroes      HeroTalent[]
+  
+  @@map("talents")
+}
+
+model Spell {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  
+  // Spell properties
+  property    String   // e.g., "Elementar", "Illusion", "Telekinese"
+  tradition   String   // e.g., "Gildenmagier", "Druide", "Elf"
+  
+  // Associated attributes for spell tests
+  attribute1  String   // MU, KL, IN
+  attribute2  String
+  attribute3  String
+  
+  // Casting details
+  castingTime String   // e.g., "1 Aktion", "1 Minute"
+  duration    String   // e.g., "Sofort", "10 Minuten"
+  range       String   // e.g., "Selbst", "Berührung", "7 Schritt"
+  
+  // Costs
+  aspCost     String   // Astral energy cost
+  components  String?  // Material components
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  heroes      HeroSpell[]
+  
+  @@map("spells")
+}
+
+model Liturgy {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  
+  // Liturgy properties
+  god         String   // e.g., "Praios", "Rondra", "Efferd"
+  aspect      String   // e.g., "Schutz", "Kampf", "Wasser"
+  
+  // Associated attributes for liturgy tests
+  attribute1  String   // MU, KL, IN, CH
+  attribute2  String
+  attribute3  String
+  
+  // Casting details
+  castingTime String
+  duration    String
+  range       String
+  
+  // Costs
+  kpCost      String   // Karma energy cost
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  heroes      HeroLiturgy[]
+  
+  @@map("liturgies")
+}
+
+// Hero and related models
+model Hero {
+  id          String   @id @default(cuid())
+  name        String
+  playerId    String   // Supabase user ID
+  
+  // Basic information
+  raceId      String
+  cultureId   String
+  professionId String
+  
+  // Attributes (Eigenschaften)
+  mu          Int      @default(8) // Mut (Courage)
+  kl          Int      @default(8) // Klugheit (Intelligence)
+  in          Int      @default(8) // Intuition
+  ch          Int      @default(8) // Charisma
+  ff          Int      @default(8) // Fingerfertigkeit (Dexterity)
+  ge          Int      @default(8) // Gewandtheit (Agility)
+  ko          Int      @default(8) // Konstitution (Constitution)
+  kk          Int      @default(8) // Körperkraft (Strength)
+  
+  // Derived values
+  lebenspunkte    Int      @default(30) // Life points
+  astralpunkte    Int      @default(0)  // Astral points
+  karmapunkte     Int      @default(0)  // Karma points
+  
+  // Current values
+  currentLp       Int      @default(30)
+  currentAsp      Int      @default(0)
+  currentKp       Int      @default(0)
+  
+  // Adventure points
+  usedAp          Int      @default(0)
+  totalAp         Int      @default(900) // Starting AP for most professions
+  
+  // Physical characteristics
+  height          Int?     // in cm
+  weight          Int?     // in kg
+  hairColor       String?
+  eyeColor        String?
+  
+  // Background
+  background      String?
+  notes           String?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Relations
+  race            Race     @relation(fields: [raceId], references: [id])
+  culture         Culture  @relation(fields: [cultureId], references: [id])
+  profession      Profession @relation(fields: [professionId], references: [id])
+  
+  // Hero-specific data
+  advantages      HeroAdvantage[]
+  disadvantages   HeroDisadvantage[]
+  specialAbilities HeroSpecialAbility[]
+  talents         HeroTalent[]
+  spells          HeroSpell[]
+  liturgies       HeroLiturgy[]
+  inventory       InventoryItem[]
+  
+  @@map("heroes")
+}
+
+// Junction tables for hero-specific data
+model HeroAdvantage {
+  id          String   @id @default(cuid())
+  heroId      String
+  advantageId String
+  level       Int      @default(1) // Some advantages have levels
+  
+  hero        Hero     @relation(fields: [heroId], references: [id], onDelete: Cascade)
+  advantage   Advantage @relation(fields: [advantageId], references: [id])
+  
+  @@unique([heroId, advantageId])
+  @@map("hero_advantages")
+}
+
+model HeroDisadvantage {
+  id             String   @id @default(cuid())
+  heroId         String
+  disadvantageId String
+  level          Int      @default(1) // Some disadvantages have levels
+  
+  hero           Hero     @relation(fields: [heroId], references: [id], onDelete: Cascade)
+  disadvantage   Disadvantage @relation(fields: [disadvantageId], references: [id])
+  
+  @@unique([heroId, disadvantageId])
+  @@map("hero_disadvantages")
+}
+
+model HeroSpecialAbility {
+  id               String   @id @default(cuid())
+  heroId           String
+  specialAbilityId String
+  level            Int      @default(1) // Some abilities have levels
+  
+  hero             Hero     @relation(fields: [heroId], references: [id], onDelete: Cascade)
+  specialAbility   SpecialAbility @relation(fields: [specialAbilityId], references: [id])
+  
+  @@unique([heroId, specialAbilityId])
+  @@map("hero_special_abilities")
+}
+
+model HeroTalent {
+  id       String   @id @default(cuid())
+  heroId   String
+  talentId String
+  value    Int      @default(0) // Talent value (0-18+)
+  
+  hero     Hero     @relation(fields: [heroId], references: [id], onDelete: Cascade)
+  talent   Talent   @relation(fields: [talentId], references: [id])
+  
+  @@unique([heroId, talentId])
+  @@map("hero_talents")
+}
+
+model HeroSpell {
+  id      String   @id @default(cuid())
+  heroId  String
+  spellId String
+  value   Int      @default(0) // Spell value (0-18+)
+  
+  hero    Hero     @relation(fields: [heroId], references: [id], onDelete: Cascade)
+  spell   Spell    @relation(fields: [spellId], references: [id])
+  
+  @@unique([heroId, spellId])
+  @@map("hero_spells")
+}
+
+model HeroLiturgy {
+  id        String   @id @default(cuid())
+  heroId    String
+  liturgyId String
+  value     Int      @default(0) // Liturgy value (0-18+)
+  
+  hero      Hero     @relation(fields: [heroId], references: [id], onDelete: Cascade)
+  liturgy   Liturgy  @relation(fields: [liturgyId], references: [id])
+  
+  @@unique([heroId, liturgyId])
+  @@map("hero_liturgies")
+}
+
+// Inventory system
+model InventoryItem {
+  id          String   @id @default(cuid())
+  heroId      String
+  name        String
+  description String?
+  quantity    Int      @default(1)
+  weight      Float?   // in Unze (ounces)
+  value       Float?   // in Silber (silver)
+  category    String   // e.g., "Weapon", "Armor", "Tool", "Misc"
+  
+  // Weapon/Armor specific properties
+  damage      String?  // e.g., "1W6+2"
+  protection  Int?     // Armor protection value
+  encumbrance Int?     // Armor encumbrance
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  hero        Hero     @relation(fields: [heroId], references: [id], onDelete: Cascade)
+  
+  @@map("inventory_items")
+}
